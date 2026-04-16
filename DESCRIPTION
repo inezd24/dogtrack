@@ -42,6 +42,7 @@ Suggests:
     rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
+<<<<<<< HEAD
 URL: https://github.com/Ressim16/dogtrack
 BugReports: https://github.com/Ressim16/dogtrack/issues
 Collate: 
@@ -57,3 +58,7 @@ Collate:
     'metadata.R'
     'pipeline.R'
     'utils.R'
+=======
+URL: https://github.com/inezd24/dogtrack
+BugReports: https://github.com/inezd24/dogtrack/issues
+>>>>>>> b440d7a6947b1f52525dbb2d03893610e4fa623a
