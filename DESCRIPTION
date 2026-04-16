@@ -44,3 +44,16 @@ Suggests:
 VignetteBuilder: knitr
 URL: https://github.com/Ressim16/dogtrack
 BugReports: https://github.com/Ressim16/dogtrack/issues
+Collate: 
+    'static_analysis.R'
+    'contact_probabilities.R'
+    'dogtrack-package.R'
+    'filter_angle.R'
+    'filter_hdop.R'
+    'filter_height.R'
+    'filter_speed.R'
+    'globals.R'
+    'load_data.R'
+    'metadata.R'
+    'pipeline.R'
+    'utils.R'
