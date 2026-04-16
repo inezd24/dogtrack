@@ -42,5 +42,5 @@ Suggests:
     rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
-URL: https://github.com/Ressim16/dogtrack
-BugReports: https://github.com/Ressim16/dogtrack/issues
+URL: https://github.com/inezd24/dogtrack
+BugReports: https://github.com/inezd24/dogtrack/issues
