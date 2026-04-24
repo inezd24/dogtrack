@@ -1,8 +1,8 @@
 # =============================================================================
 # R/calculate_contact_prob.R
 # Package : dogtrack
-# Purpose : High-performance calculation of contact probabilities using 
-#           spatiotemporal decay and optional path-awareness.
+# Purpose : Calculation of contact probabilities using spatiotemporal decay 
+# and optional path-awareness.
 # Exported functions:
 #   get_contact_probabilities()  -- uses GPS data to create contact probabilities
 # Dependencies:
@@ -248,4 +248,7 @@ get_contact_probabilities <- function(dog_data,
   )]
   
   return(dplyr::as_tibble(res))
+}
+  
+  
 }
