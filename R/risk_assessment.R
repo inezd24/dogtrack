@@ -9,48 +9,13 @@
 # =============================================================================
 #' 
 #' 
-#' Function 1: Create a standardized base raster
-#' 
-#' @description Create a standardized Base Raster from any spatial data
-#' 
-#' @param spatial_data A data.frame with \code{long} and \code{lat} or an \code{sf} object.
-#' @param res Numeric. Resolution in decimal degrees (e.g., 0.001 ~ 110m).
-#' @param buffer Numeric. Buffer around the bounding box (in degrees) to avoid edge effects.
-#' @param crs Character. The CRS string, default is EPSG:4326.
-#'
-#' @export
-create_base_raster <- function(spatial_data, 
-                               res = 0.001, 
-                               buffer = 0.01, 
-                               crs = "EPSG:4326") {
-  
-  # If data is not sf object, turn into sf object
-  if (!inherits(spatial_data, "sf")) {
-    sf_data <- sf::st_as_sf(spatial_data, coords = c("long", "lat"), crs = crs)
-  }
-  
-  # Get bounding box and apply buffer
-  bbox <- sf::st_bbox(sf_data)
-  ext_box <- terra::ext(bbox$xmin - buffer, bbox$xmax + buffer, 
-                        bbox$ymin - buffer, bbox$ymax + buffer)
-  
-  # Create the SpatRaster
-  base_rast <- terra::rast(ext_box, 
-                           res = res, 
-                           crs = crs)
-  terra::values(base_rast) <- 0
-  
-  return(base_rast)
-}
-#' 
-#' 
 #' Function 2: Plot household sero-prevalence
 #' 
 #' @description This function uses individual GPS and sero-prevalence data to 
 #' generate a sero-prevalence distribution layer through IDW interpolation
 #' 
 #' @param path Path used to save images
-#' @param movement_df Data frame with three columns: id, long, lat.
+#' @param households_locations Data frame with three columns: id, long, lat.
 #' @param status_df Data frame with columns: id, status (1 = positive, 0 = negative).
 #' @param image_name Desired name of image for spatial seroprevalence distribution
 #'
