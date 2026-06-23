@@ -40,8 +40,8 @@
   
   if (nrow(first_cell) == 0L || ncol(first_cell) == 0L) {
     stop(
-      "load_dog_data(): file '", basename(file_path), "' appears to be empty ",
-      "and cannot be used for device auto-detection."
+      "device auto-detection failed: file '", basename(file_path), "' ",
+      "appears to be empty and cannot be used for device auto-detection."
     )
   }
   
@@ -60,12 +60,12 @@
   }
   
   stop(
-    "load_dog_data(): could not auto-detect device type for '", basename(file_path), "' ",
+    "device auto-detection failed for '", basename(file_path), "' ",
     "(device_type = 'mix').\n",
     "Expected either a CatLog file (\"Name:CatLog\" in the first cell) or a ",
     "Columbus file (INDEX and TAG columns in row 1).\n",
-    "If this file is from a different device, call load_dog_data() for it ",
-    "separately with device_type = 'other' and col_aliases."
+    "If this file is from a different device, load it separately with ",
+    "device_type = 'other' and col_aliases."
   )
 }
 
@@ -343,8 +343,10 @@
 #'
 #' **Filename convention and parsing:** filenames are expected to follow
 #' `[Country][Location][Setting]-[house: 3 digits]-[individual: 2 digits]`
-#' (e.g. `"TUA011-01"`), optionally followed by one of two mutually exclusive
-#' trailing suffixes:
+#' (e.g. `"TUA011-01"`). The separators may be `-` or `_` (e.g.
+#' `"UAR001_01.CSV"` is accepted and normalised to `"UAR001-01"` for
+#' `join_key`), since both conventions appear across sites/eras. This is
+#' optionally followed by one of two mutually exclusive trailing suffixes:
 #' \itemize{
 #'   \item a session letter (`A`/`B`/`C`), glued directly or with one
 #'     leading hyphen (e.g. `"TUA011-01A"` or `"TUA011-01-A"`)
@@ -490,8 +492,13 @@ load_dog_data <- function(data_dir, metadata, device_type, col_aliases = NULL) {
   
   # Filename convention: [Country][Location][Setting]-[house:3 digits]-[individual:2 digits]
   #   e.g. "TUA011-01" is the canonical core.
+  # The separator between the 3-letter site code and the house number, and
+  # between the house number and individual number, may be "-" OR "_"
+  # (older Uganda files use "_", e.g. "UAR001_01.CSV"); both are normalised
+  # to "-" in `base_key` so join_key is always consistent regardless of the
+  # original file's separator style.
   # Two kinds of trailing suffix are recognised, and they are mutually exclusive:
-  #   (a) a session letter (A/B/C), glued with or without a hyphen
+  #   (a) a session letter (A/B/C), glued with or without a hyphen/underscore
   #       e.g. "TUA011-01A" or "TUA011-01-A" -> session = "A"
   #   (b) a device number, optionally followed by free-text commentary,
   #       always introduced by a hyphen after the canonical core
@@ -509,13 +516,25 @@ load_dog_data <- function(data_dir, metadata, device_type, col_aliases = NULL) {
     dplyr::mutate(
       file_key = tools::file_path_sans_ext(basename(file_path)),
       
-      # Canonical core: COUNTRY+LOCATION+SETTING(3 letters) - house(3 digits) - individual(2 digits)
-      core = stringr::str_extract(file_key, "^[A-Z]{3}-?\\d{3}-\\d{2}"),
+      # Canonical core: COUNTRY+LOCATION+SETTING(3 letters) [-_]? house(3 digits) [-_] individual(2 digits)
+      # Captured as a single match, then normalised to "-" separators below.
+      core_raw = stringr::str_extract(file_key, "^[A-Z]{3}[-_]?\\d{3}[-_]\\d{2}"),
       
-      # Everything after the core (may be empty string); NA if core itself is NA
+      # Normalise to a canonical "-"-separated form regardless of which
+      # separator the original filename used, so base_key/join_key is
+      # always consistent (e.g. "UAR001_01" and "UAR001-01" both become
+      # the same base_key if they ever both occurred).
+      core = dplyr::if_else(
+        is.na(core_raw), NA_character_,
+        stringr::str_replace_all(core_raw, "_", "-")
+      ),
+      
+      # Everything after the ORIGINAL (unnormalised) core match, since
+      # remainder must be sliced from the real filename, not the
+      # normalised version
       remainder = dplyr::if_else(
-        is.na(core), NA_character_,
-        stringr::str_sub(file_key, stringr::str_length(core) + 1L)
+        is.na(core_raw), NA_character_,
+        stringr::str_sub(file_key, stringr::str_length(core_raw) + 1L)
       ),
       
       # (a) Session letter: glued directly, or with one leading hyphen, then nothing else
@@ -598,7 +617,7 @@ load_dog_data <- function(data_dir, metadata, device_type, col_aliases = NULL) {
     ) |>
     dplyr::ungroup() |>
     dplyr::filter(keep) |>
-    dplyr::select(-core, -remainder, -device_suffix, -id_comment_raw,
+    dplyr::select(-core, -core_raw, -remainder, -device_suffix, -id_comment_raw,
                   -has_session_A, -n_with_base_key, -keep)
   
   cat("load_dog_data(): found", nrow(file_df), "dog CSV file(s) after session selection.\n")
